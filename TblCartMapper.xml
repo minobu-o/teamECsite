@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jp.co.internous.react.model.mapper.TblCartMapper">
+	
+<!-- 初期表示の為商品IDでjoinし、user_idが一致するデータをselect -->
+	<select id="findByUserId" resultType="jp.co.internous.react.model.domain.dto.CartDto">
+		SELECT cart.id, product.image_full_path, product.product_name, product.price, cart.product_count,price * product_count AS subtotal
+		FROM tbl_cart cart INNER JOIN mst_product product
+		ON cart.product_id = product.id
+		WHERE cart.user_id = #{userId} OR cart.user_id = #{tmpUserId}
+		ORDER BY cart.updated_at DESC, cart.created_at DESC;
+	</select>
+	
+<!-- TblCart内に同じ商品が入っているかを検索する -->
+	<select id="findByProductIdAndUserId" resultType="jp.co.internous.react.model.domain.TblCart" >
+		SELECT * FROM tbl_cart WHERE product_id = #{productId} AND (user_id = #{userId} OR user_id = #{tmpUserId})
+	</select>
+	
+<!-- TblCartの個数を更新するためのupdate文を記述（TblCartのCountにCartFormのCountを足した数に更新する） -->
+	<update id="updateProductId">
+		UPDATE tbl_cart SET product_count = product_count + #{productCount} WHERE product_id=#{productId}
+	</update>
+	
+<!-- TblCartにデータを入れるため、購入時のinsertを記述 -->
+	<insert id="insert">
+		INSERT INTO tbl_cart(user_id, product_id, product_count)
+			VALUES(#{userId}, #{productId}, #{productCount})
+	</insert>
+
+</mapper>

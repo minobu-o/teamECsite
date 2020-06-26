@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+
+<link href="/css/reset.css" th:href="@{/css/reset.css}" rel="stylesheet" />
+<link href="/css/style.css" th:href="@{/css/style.css}" rel="stylesheet" />
+
+<title>Réagir</title>
+</head>
+<body>
+
+<header th:insert="fragments/page_header::pageHeader"></header>
+<script>
+$(() => {
+	$('button#addCart').on('click', addCart);
+	});
+	
+let addCart = (event) => {
+	let countNumber = $("[type=number]").val();
+	
+	/* 購入個数が0の場合はアラートを表示*/ 
+	if(countNumber === '0'){
+		alert('個数が0です。')
+		return;
+	}
+	$('form').attr('action', '/react/cart/add');
+	$('form').submit();
+};
+</script>
+
+<main>
+	<div class="container">
+	 	<table class="top" >
+			<caption th:text="${mstProductList.productName} + '(' + ${mstProductList.productNameKana} + ')'"></caption>
+			<tr>
+				<th>画像</th><th>価格</th><th>発売元</th><th>発売年月日</th>
+			</tr>
+			<tr>
+				<td class="imageDetail">
+					<img class="itemImageDetail" th:src="${mstProductList.imageFullPath}" alt="" />
+				</td>
+				<td class="number" th:text="${mstProductList.price}+'円'"></td>
+				<td th:text="${mstProductList.releaseCompany}"></td>
+				<td th:text="${mstProductList.releaseDate}"></td>
+			</tr>
+		</table>
+		<div class="descriptionArea">
+			<label id="description">商品説明</label>
+			<textarea cols="75" rows="5" readonly th:text="${mstProductList.productDescription}"></textarea>
+		</div>
+			
+			<hr />
+			
+		<form method="post">
+			<div class="buttonArea">
+				<label>購入個数</label>
+				<input type="number" name="productCount" class="count number" value="0" min="0" oninput="validity.valid||(value='');" style="text-align:right"/>
+				<input type="hidden" name="productId" id="hiddenProductId" th:value="${mstProductList.id}"/>
+ 				<button type="submit" id="addCart" class="cartButton">カートに追加</button>
+			</div>
+		</form>
+	</div>
+</main>
+
+</body>
+</html>

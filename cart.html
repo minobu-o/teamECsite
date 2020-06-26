@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+
+<link href="/css/reset.css" th:href="@{/css/reset.css}" rel="stylesheet" />
+<link href="/css/style.css" th:href="@{/css/style.css}" rel="stylesheet" />
+
+<title>Réagir</title>
+</head>
+<body>
+
+<header th:insert="fragments/page_header::pageHeader"></header> 
+
+<script>
+$(() => {
+	// 購入個数と金額の合計を算出し、合計欄に設定する
+	calcTotalArea();
+	//購入ボタンの活性化・非活性化を変更
+	$("input").change(function() {
+		changeBtn();
+	})
+	// 削除ボタンの機能を実装
+	$('button#deleteBtn').on('click', deleteCart);
+	//購入ボタン押下時のイベント
+	$('button#purchaseBtn').on('click', purchase); 
+});
+
+function calcTotalArea() {
+	let subtotalList = $('.subtotal');
+	let countList = $('.productCount');
+	let totalPrice = 0;
+	let totalCount = 0;
+	
+	for (let subtotal of subtotalList) {
+		totalPrice += parseInt($(subtotal).text());
+ 	}
+ 	for (let count of countList) {
+ 		totalCount += parseInt($(count).text());
+ 	}
+	
+	$('#totalPrice').text(totalPrice);
+	$('#totalCount').text(totalCount);
+};
+
+function changeBtn(){
+	let listId = [];
+	$('input:checked').each(function(){
+		listId.push($(this).val());
+	})
+	if(listId.length == 0){
+		$('button#deleteBtn').prop('disabled', true);
+	} else {
+		$('button#deleteBtn').prop('disabled', false);
+	}
+};
+
+let deleteCart = (event) => {
+	let idList = [];
+	$('input:checked').each(function(){
+		idList.push($(this).val());
+	})
+	$.ajax({
+		type: 'POST',
+		url: '/react/cart/delete',
+		data: JSON.stringify({"idList":idList}),
+		contentType: 'application/json',
+		datatype: 'utf-8'
+	})
+	.then((result) => {
+		for (eachId of $('input:checked')) {
+			$(eachId).parent().parent().remove();
+		}		
+		$('button#deleteBtn').prop('disabled', true);
+		calcTotalArea();
+		
+		if($('.cartId').length == 0){
+			window.location.href = '/react/cart/';
+		}
+	},() => {
+		console.error('Error ajax connection.failed.');
+		});
+};
+
+let purchase = (event) => {
+	let userName = $("#hiddenUserName").val();
+	if(isEmpty(userName)){
+		alert('ログインしてください。');
+		return;
+	}else{
+		window.location.href = '/react/settlement/';
+	}
+}
+</script>
+
+<main>
+	<div class="container cart">
+		<h2>カート</h2>
+			<div th:if ="${CartList == null || CartList.size() == 0}" class="noData">
+				<p class="info">カート情報はありません。</p>
+			</div>
+			
+			<table th:unless ="${CartList == null || CartList.size() == 0}" class="cart">
+				<tr>
+					<th>選択</th><th>画像</th><th>商品名</th><th>価格(円)</th><th>個数</th><th>小計(円)</th>
+				</tr>
+				<tr id="cartList" th:each="Cart:${CartList}">
+					<td>
+					 <input type="checkbox" class="cartId" th:value="${Cart.id}"/>
+					</td>
+					<td class="image">
+						<img class="itemImage" th:src="${Cart.imageFullPath}" alt="" />
+					</td>
+					<td th:text="${Cart.productName}"></td>
+					<td id="price" class="number" th:text="${Cart.price}"></td>
+					<td class="productCount number" th:text="${Cart.productCount}"></td>
+					<td class="subtotal number" th:text="${Cart.subtotal}"></td>
+				</tr>
+				<tr>
+					<td class="totalArea"></td>
+					<td class="totalArea"></td>
+					<td class="totalArea">合計(円)</td>
+					<td class="totalArea"></td>
+					<td class="totalArea" id="totalCount"></td>
+					<td class="totalArea" id="totalPrice"></td>
+				</tr>
+			</table>
+			<div th:unless ="${CartList == null || CartList.size() == 0}" class="buttonArea">
+				<button id="deleteBtn" disabled>削除</button>
+				<button id="purchaseBtn">購入</button>
+			</div>
+	</div>
+</main>
+</body>
+</html>
